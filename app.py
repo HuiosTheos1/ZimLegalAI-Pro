@@ -43,9 +43,46 @@ if "disclaimer_accepted" not in st.session_state:
         st.rerun()
     st.stop()
 
-# --- 3. INTAKE & PERSONALIZATION ---
+# --- 3. INTAKE & PERSONALIZATION (Fixed Form) ---
 if "user_name" not in st.session_state:
     st.title("⚖️ Initial Intake")
     with st.form("intake_form"):
+        st.write("Enter your details to begin the simulation.")
         name = st.text_input("Full Name")
-        lang = st.selectbox
+        lang = st.selectbox("Preferred Language", ["English", "Shona", "Ndebele", "Mixed"])
+        role = st.selectbox("I am an:", ["Accused Person", "Employee", "Employer", "Lawyer", "Student"])
+        
+        # This button MUST be indented to be inside the form
+        submitted = st.form_submit_button("Start Legal Strategy")
+        
+        if submitted:
+            if name:
+                st.session_state.update({
+                    "user_name": name, 
+                    "user_lang": lang, 
+                    "user_role": role, 
+                    "score": 50
+                })
+                st.rerun()
+            else:
+                st.error("Name is required.")
+    st.stop()
+
+# --- 4. MAIN APP INTERFACE ---
+st.title(f"⚖️ {st.session_state.user_name}'s Pre-Trial Session")
+
+# Sidebar
+with st.sidebar:
+    st.header("📊 Readiness")
+    st.metric("Success Probability", f"{st.session_state.score}%")
+    st.progress(st.session_state.score / 100)
+    st.divider()
+    if st.button("🚨 EMERGENCY: ARRESTED", type="primary"): 
+        st.session_state.emergency = True
+
+if st.session_state.get('emergency'):
+    st.error("### 🔴 CONSTITUTIONAL PROTOCOL (Sec 50)")
+    st.markdown("1. **Remain Silent.**\n2. **Demand a Lawyer.**\n3. **48-Hour Rule.**")
+    if st.button("Return to Session"): 
+        st.session_state.emergency = False
+        st.rer

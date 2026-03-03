@@ -15,7 +15,7 @@ def initialize_brain():
     loader = DirectoryLoader('./docs/', glob="./*.pdf", loader_cls=PyPDFLoader)
     documents = loader.load()
     if not documents:
-        st.error("⚠️ No Law PDFs found. Please upload to 'docs/' folder.")
+        st.error("⚠️ No Law PDFs found. Please upload statutes to 'docs/' folder on GitHub.")
         st.stop()
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     texts = text_splitter.split_documents(documents)
@@ -26,7 +26,7 @@ def initialize_brain():
 st.set_page_config(page_title="Zim-Legal AI Hub", page_icon="⚖️", layout="wide")
 
 if "user_name" not in st.session_state:
-    st.title("⚖️ Zim-Legal AI: Justice for All")
+    st.title("⚖️ Zim-Legal AI")
     st.info("Founder: Clyton Makate")
     name = st.text_input("Enter your name to access the dashboard:")
     if st.button("Enter Dashboard"):
@@ -38,7 +38,7 @@ if "user_name" not in st.session_state:
 
 # --- 3. DASHBOARD MENU ---
 with st.sidebar:
-    st.title(f"Hi, {st.session_state.user_name}")
+    st.title(f"👤 {st.session_state.user_name}")
     choice = st.radio("Main Menu:", [
         "🏠 Home (Our Mission)",
         "🏢 Retail & Store Compliance",
@@ -56,48 +56,37 @@ with st.sidebar:
 
 if choice == "🏠 Home (Our Mission)":
     st.title("⚖️ Zim-Legal AI Hub")
-    # THE CORRECTED MOTTO
     st.subheader("Motto: 'Justice Delayed is NOT Justice Denied.'")
     st.markdown("---")
-    st.markdown("""
-    ### 🛡️ Our Mission
-    To empower the Zimbabwean citizen and business owner. We believe that regardless of how long the legal process 
-    takes, the truth and your rights must be protected.
+    st.markdown(f"""
+    ### 🛡️ Welcome, {st.session_state.user_name}
+    Our mission is to empower the Zimbabwean citizen and business owner with instant, 
+    accurate legal information. We believe that legal knowledge should not be 
+    hidden behind expensive fees.
     
-    ### 🚀 Sector Tools:
-    - **Retailers:** Get your ZIMRA and Council checklists.
-    - **Miners:** Understand pegging and EMA compliance.
-    - **Transport:** Check VID and route permit requirements.
-    - **AI Advisor:** Practice your defense and get a 'Readiness Score' before your court date.
+    ### 🚀 Sector Specific Tools:
+    - **Retail & Mining:** Checklists for 2026 compliance.
+    - **Transport:** Licensing and VID requirements.
+    - **Legal AI Advisor:** Test your legal defense against an adversarial AI.
     """)
-    st.success(f"Welcome, {st.session_state.user_name}. Use the sidebar to navigate.")
+    st.success("Please select a service from the sidebar to begin.")
 
 elif choice == "🏢 Retail & Store Compliance":
-    st.header("Retail & Storefront Operations")
-    st.markdown("""
-    - **Licensing:** Harare/Mutare/Local Council Shop Licenses.
-    - **Taxes:** ZIMRA Income Tax and VAT compliance for 2026.
-    - **Health:** Sanitary requirements for food outlets.
-    """)
+    st.header("🏢 Retail & Store Compliance")
+    st.write("Information on Shop Licenses, ZIMRA, and Council requirements.")
 
 elif choice == "⛏️ Mining & Claims Law":
-    st.header("Mining & Extractives Sector")
-    st.markdown("""
-    - **Claims:** Prospecting and pegging procedures.
-    - **Environment:** Environmental Management Agency (EMA) EIA requirements.
-    - **Gold:** Fidelity Gold Refinery sales protocols.
-    """)
+    st.header("⛏️ Mining & Claims Law")
+    st.write("Guidance on Prospecting, Pegging, and EMA Compliance.")
 
 elif choice == "🚕 Transport & Taxi Regulations":
-    st.header("Transport & Logistics")
-    st.markdown("""
-    - **Fitness:** VID testing and PSV requirements.
-    - **Insurance:** Passenger and third-party liability.
-    - **ZINARA:** Licensing and tollgate protocols.
-    """)
+    st.header("🚕 Transport & Taxi Regulations")
+    st.write("Checklists for VID, Insurance, and Passenger permits.")
 
 elif choice == "⚖️ Legal AI Advisor (Pre-Trial)":
-    st.header("Legal AI Interrogator")
+    st.header("⚖️ Legal AI Advisor (Pre-Trial)")
+    st.caption("Adversarial Mode: I will challenge your defense to prepare you for court.")
+    
     db = initialize_brain()
     
     if "messages" not in st.session_state:
@@ -108,40 +97,44 @@ elif choice == "⚖️ Legal AI Advisor (Pre-Trial)":
     for m in st.session_state.messages:
         with st.chat_message(m["role"]): st.markdown(m["content"])
 
-    if prompt := st.chat_input("Explain your legal challenge..."):
+    if prompt := st.chat_input("Explain your case or legal issue..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
-        llm = ChatGroq(model_name="llama3-70b-8192", groq_api_key=st.secrets["GROQ_API_KEY"])
-        
-        TEMPLATE = f"""You are the 'Zim-Legal Advisor' for {st.session_state.user_name}.
-        Challenge the user's story, cite Zimbabwean law where possible, and always end with:
-        'Readiness Score: X/100'.
-        
-        CONTEXT: {{context}} | HISTORY: {{chat_history}}
-        QUESTION: {{question}}"""
-        
-        qa = ConversationalRetrievalChain.from_llm(
-            llm=llm, 
-            retriever=db.as_retriever(),
-            combine_docs_chain_kwargs={"prompt": PromptTemplate(template=TEMPLATE, input_variables=["context", "chat_history", "question"])}
-        )
-        
-        with st.chat_message("assistant"):
-            # Fixed history handling
-            res = qa({"question": prompt, "chat_history": st.session_state.chat_history})
-            ans = res["answer"]
+        try:
+            llm = ChatGroq(model_name="llama3-70b-8192", groq_api_key=st.secrets["GROQ_API_KEY"])
             
-            if "Readiness Score:" in ans:
-                try:
-                    s = int(ans.split("Readiness Score:")[1].split("/")[0].strip())
-                    st.session_state.score = s
-                except: pass
+            # Simplified template to prevent Groq BadRequest errors
+            TEMPLATE = """You are the Zim-Legal Advisor. 
+            Challenge the user's defense, cite Zimbabwean law, and always end with 'Readiness Score: X/100'.
+            Context: {context}
+            Chat History: {chat_history}
+            User: {question}
+            Advisor:"""
             
-            st.markdown(ans)
-            st.session_state.messages.append({"role": "assistant", "content": ans})
-            st.session_state.chat_history.append((prompt, ans))
+            qa = ConversationalRetrievalChain.from_llm(
+                llm=llm, 
+                retriever=db.as_retriever(),
+                combine_docs_chain_kwargs={"prompt": PromptTemplate(template=TEMPLATE, input_variables=["context", "chat_history", "question"])}
+            )
+            
+            with st.chat_message("assistant"):
+                res = qa.invoke({"question": prompt, "chat_history": st.session_state.chat_history})
+                ans = res["answer"]
+                
+                if "Readiness Score:" in ans:
+                    try:
+                        s = int(ans.split("Readiness Score:")[1].split("/")[0].strip())
+                        st.session_state.score = s
+                    except: pass
+                
+                st.markdown(ans)
+                st.session_state.messages.append({"role": "assistant", "content": ans})
+                st.session_state.chat_history.append((prompt, ans))
+                
+        except Exception as e:
+            st.error(f"AI Connection Error: Please try again in a moment. (Error: {str(e)})")
 
 elif choice == "📂 Document Library":
-    st.header("Legal Document Library")
-    st.write("Browse and download the statutes relevant to your business.")
+    st.header("📂 Document Library")
+    st.write("Browse official Statutes and Acts.")

@@ -1,6 +1,7 @@
 streamlit
-langchain-groq
+langchain-classic
 langchain-community
 langchain-huggingface
 faiss-cpu
 pypdf
+langchain-groq

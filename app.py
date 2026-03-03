@@ -2,7 +2,7 @@ import streamlit as st
 from langchain_groq import ChatGroq 
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+from langchain_classic.chains import RetrievalQA
 from engine import initialize_brain
 
 st.set_page_config(page_title="Zim-Legal AI", page_icon="⚖️")
@@ -26,3 +26,4 @@ if st.session_state.db:
     if st.button("Consult AI"):
         res = qa_chain.invoke(query)
         st.write(res["result"])
+

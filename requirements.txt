@@ -1,0 +1,6 @@
+streamlit
+langchain-ollama
+langchain-classic
+langchain-huggingface
+faiss-cpu
+pypdf

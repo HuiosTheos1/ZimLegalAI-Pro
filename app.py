@@ -15,7 +15,7 @@ if 'db' not in st.session_state:
 
 if st.session_state.db:
     # Use Groq for lightning speed on Android
-    llm = ChatGroq(model_name="llama3-8b-8192", groq_api_key=st.secrets["GROQ_API_KEY"])
+    llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=st.secrets["GROQ_API_KEY"])
     
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm, 
@@ -26,4 +26,5 @@ if st.session_state.db:
     if st.button("Consult AI"):
         res = qa_chain.invoke(query)
         st.write(res["result"])
+
 

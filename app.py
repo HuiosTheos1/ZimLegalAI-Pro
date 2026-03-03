@@ -28,7 +28,7 @@ st.set_page_config(page_title="Zim-Legal AI Hub", page_icon="⚖️", layout="wi
 if "user_name" not in st.session_state:
     st.title("⚖️ Zim-Legal AI: Justice for All")
     st.info("Founder: Clyton Makate")
-    name = st.text_input("Enter your name:")
+    name = st.text_input("Enter your name to access the dashboard:")
     if st.button("Enter Dashboard"):
         if name:
             st.session_state.user_name = name
@@ -54,38 +54,48 @@ with st.sidebar:
 
 # --- 4. THE PAGES ---
 
-# --- HOME (NEW) ---
 if choice == "🏠 Home (Our Mission)":
-    st.title("⚖️ Zim-Legal AI")
-    st.subheader("Motto: 'Justice Delayed is Justice Denied — Empowering the Zimbabwean Citizen.'")
+    st.title("⚖️ Zim-Legal AI Hub")
+    # THE CORRECTED MOTTO
+    st.subheader("Motto: 'Justice Delayed is NOT Justice Denied.'")
     st.markdown("---")
     st.markdown("""
     ### 🛡️ Our Mission
-    To bridge the gap between complex law and the everyday citizen. Whether you are a small business owner 
-    operating a retail store, a taxi operator, or an employee seeking justice, **Zim-Legal AI** is your 
-    first line of defense.
+    To empower the Zimbabwean citizen and business owner. We believe that regardless of how long the legal process 
+    takes, the truth and your rights must be protected.
     
-    ### 🚀 How to use this Dashboard:
-    - **Business Owners:** Select your sector (Retail, Mining, Transport) to see 2026 compliance checklists.
-    - **Legal Prep:** Use the **AI Advisor** to test your case before going to court or a hearing.
-    - **Law Library:** Download official statutes to keep on your phone.
+    ### 🚀 Sector Tools:
+    - **Retailers:** Get your ZIMRA and Council checklists.
+    - **Miners:** Understand pegging and EMA compliance.
+    - **Transport:** Check VID and route permit requirements.
+    - **AI Advisor:** Practice your defense and get a 'Readiness Score' before your court date.
     """)
-    st.success(f"Welcome to the hub, {st.session_state.user_name}. Select a tool in the sidebar to begin.")
+    st.success(f"Welcome, {st.session_state.user_name}. Use the sidebar to navigate.")
 
-# --- SECTORS ---
 elif choice == "🏢 Retail & Store Compliance":
-    st.header("Retail & Shop License Guide")
-    st.write("Ensuring your store meets ZIMRA and Local Council standards.")
+    st.header("Retail & Storefront Operations")
+    st.markdown("""
+    - **Licensing:** Harare/Mutare/Local Council Shop Licenses.
+    - **Taxes:** ZIMRA Income Tax and VAT compliance for 2026.
+    - **Health:** Sanitary requirements for food outlets.
+    """)
 
 elif choice == "⛏️ Mining & Claims Law":
-    st.header("Mining Compliance & EIA")
-    st.write("For small-scale miners navigating the Ministry of Mines.")
+    st.header("Mining & Extractives Sector")
+    st.markdown("""
+    - **Claims:** Prospecting and pegging procedures.
+    - **Environment:** Environmental Management Agency (EMA) EIA requirements.
+    - **Gold:** Fidelity Gold Refinery sales protocols.
+    """)
 
 elif choice == "🚕 Transport & Taxi Regulations":
-    st.header("Public Service Vehicle (PSV) Rules")
-    st.write("Stay compliant with VID and Road Traffic Act regulations.")
+    st.header("Transport & Logistics")
+    st.markdown("""
+    - **Fitness:** VID testing and PSV requirements.
+    - **Insurance:** Passenger and third-party liability.
+    - **ZINARA:** Licensing and tollgate protocols.
+    """)
 
-# --- AI ADVISOR (FIXED GROQ ERROR) ---
 elif choice == "⚖️ Legal AI Advisor (Pre-Trial)":
     st.header("Legal AI Interrogator")
     db = initialize_brain()
@@ -95,18 +105,18 @@ elif choice == "⚖️ Legal AI Advisor (Pre-Trial)":
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    # Display history
     for m in st.session_state.messages:
         with st.chat_message(m["role"]): st.markdown(m["content"])
 
-    if prompt := st.chat_input("State your legal issue..."):
+    if prompt := st.chat_input("Explain your legal challenge..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
         llm = ChatGroq(model_name="llama3-70b-8192", groq_api_key=st.secrets["GROQ_API_KEY"])
         
         TEMPLATE = f"""You are the 'Zim-Legal Advisor' for {st.session_state.user_name}.
-        Challenge the user's story, warn of legal risks, and give a 'Readiness Score: X/100' at the end.
+        Challenge the user's story, cite Zimbabwean law where possible, and always end with:
+        'Readiness Score: X/100'.
         
         CONTEXT: {{context}} | HISTORY: {{chat_history}}
         QUESTION: {{question}}"""
@@ -118,11 +128,10 @@ elif choice == "⚖️ Legal AI Advisor (Pre-Trial)":
         )
         
         with st.chat_message("assistant"):
-            # FIX: We pass a formatted history string instead of an empty list
+            # Fixed history handling
             res = qa({"question": prompt, "chat_history": st.session_state.chat_history})
             ans = res["answer"]
             
-            # Update score
             if "Readiness Score:" in ans:
                 try:
                     s = int(ans.split("Readiness Score:")[1].split("/")[0].strip())
@@ -131,9 +140,8 @@ elif choice == "⚖️ Legal AI Advisor (Pre-Trial)":
             
             st.markdown(ans)
             st.session_state.messages.append({"role": "assistant", "content": ans})
-            # Save to history for the NEXT turn
             st.session_state.chat_history.append((prompt, ans))
 
 elif choice == "📂 Document Library":
-    st.header("Statute Downloads")
-    st.write("Download Zimbabwean Acts for offline reading.")
+    st.header("Legal Document Library")
+    st.write("Browse and download the statutes relevant to your business.")

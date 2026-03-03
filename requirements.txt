@@ -1,6 +1,6 @@
 streamlit
-langchain-ollama
-langchain-classic
+langchain-groq
+langchain-community
 langchain-huggingface
 faiss-cpu
 pypdf

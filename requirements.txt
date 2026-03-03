@@ -1,15 +1,8 @@
 streamlit
-
 langchain-classic
-
 langchain-groq
-
 langchain-community
-
 langchain-huggingface
-
 langchain-text-splitters
-
 faiss-cpu
-
 pypdf

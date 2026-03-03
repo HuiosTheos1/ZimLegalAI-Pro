@@ -30,3 +30,4 @@ def initialize_brain():
     db = FAISS.from_documents(docs, embeddings)
     
     return db
+

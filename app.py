@@ -18,7 +18,7 @@ def initialize_brain():
     documents = loader.load()
     
     if not documents:
-        st.error("⚠️ No legal PDFs found in the 'docs/' folder!")
+        st.error("⚠️ No legal PDFs found in the 'docs/' folder! Please upload the Constitution or Labour Act.")
         st.stop()
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
@@ -43,7 +43,7 @@ if "disclaimer_accepted" not in st.session_state:
         st.rerun()
     st.stop()
 
-# --- 3. INTAKE & PERSONALIZATION (Fixed Form) ---
+# --- 3. INTAKE & PERSONALIZATION ---
 if "user_name" not in st.session_state:
     st.title("⚖️ Initial Intake")
     with st.form("intake_form"):
@@ -52,7 +52,6 @@ if "user_name" not in st.session_state:
         lang = st.selectbox("Preferred Language", ["English", "Shona", "Ndebele", "Mixed"])
         role = st.selectbox("I am an:", ["Accused Person", "Employee", "Employer", "Lawyer", "Student"])
         
-        # This button MUST be indented to be inside the form
         submitted = st.form_submit_button("Start Legal Strategy")
         
         if submitted:
@@ -80,9 +79,63 @@ with st.sidebar:
     if st.button("🚨 EMERGENCY: ARRESTED", type="primary"): 
         st.session_state.emergency = True
 
+# Emergency Mode Overlays
 if st.session_state.get('emergency'):
     st.error("### 🔴 CONSTITUTIONAL PROTOCOL (Sec 50)")
     st.markdown("1. **Remain Silent.**\n2. **Demand a Lawyer.**\n3. **48-Hour Rule.**")
     if st.button("Return to Session"): 
         st.session_state.emergency = False
-        st.rer
+        st.rerun()
+    st.stop()
+
+# Load Brain
+db = initialize_brain()
+
+# Chat History Setup
+if "messages" not in st.session_state:
+    st.session_state.messages = [{"role": "assistant", "content": f"Hello {st.session_state.user_name}. I am your Teacher. Describe your legal issue."}]
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+for m in st.session_state.messages:
+    with st.chat_message(m["role"]):
+        st.markdown(m["content"])
+
+# --- 5. THE INTERROGATION ---
+if prompt := st.chat_input("Explain what happened..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    llm = ChatGroq(model_name="llama3-70b-8192", groq_api_key=st.secrets["GROQ_API_KEY"])
+    
+    TEMPLATE = f"""You are the 'Zim-Legal Pre-Trial Teacher' for {st.session_state.user_name}.
+    ROLE: {st.session_state.user_role} | LANGUAGE: {st.session_state.user_lang}
+    CONTEXT: {{context}} | HISTORY: {{chat_history}}
+    
+    1. Act as a tough Prosecutor challenging the user's story.
+    2. Warn if they say something damaging: "⚠️ STOP! {st.session_state.user_name}..."
+    3. End EVERY reply with 'Readiness Score: X/100'.
+    QUESTION: {{question}}"""
+    
+    qa = ConversationalRetrievalChain.from_llm(
+        llm=llm, 
+        retriever=db.as_retriever(),
+        combine_docs_chain_kwargs={"prompt": PromptTemplate(template=TEMPLATE, input_variables=["context", "chat_history", "question"])}
+    )
+    
+    with st.chat_message("assistant"):
+        res = qa({"question": prompt, "chat_history": st.session_state.chat_history})
+        ans = res["answer"]
+        
+        # Logic to update the score meter
+        if "Readiness Score:" in ans:
+            try:
+                score_str = ans.split("Readiness Score:")[1].split("/")[0].strip()
+                st.session_state.score = int(score_str)
+            except:
+                pass
+            
+        st.markdown(ans)
+        st.session_state.messages.append({"role": "assistant", "content": ans})
+        st.session_state.chat_history.append((prompt, ans))

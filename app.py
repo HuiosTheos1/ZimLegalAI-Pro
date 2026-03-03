@@ -1,10 +1,7 @@
 import streamlit as st
-import os
+from langchain_classic.chains import RetrievalQA  # Change this line!
 from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
-from engine import initialize_brain
+# ... (rest of your imports)
 
 st.set_page_config(page_title="Zim-Legal AI", page_icon="⚖️")
 st.title("⚖️ Zim-Legal AI")
@@ -31,3 +28,4 @@ if st.session_state.db:
             res = qa_chain.invoke(query)
             st.markdown("### 📜 AI Legal Guidance")
             st.write(res["result"])
+

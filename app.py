@@ -1,3 +1,5 @@
+import os
+st.write("Files in current directory:", os.listdir("."))
 import streamlit as st
 from langchain_groq import ChatGroq
 from langchain_classic.chains import ConversationalRetrievalChain
@@ -126,3 +128,4 @@ if prompt := st.chat_input("Explain your situation..."):
         st.markdown(ans)
         st.session_state.messages.append({"role": "assistant", "content": ans})
         st.session_state.chat_history.append((prompt, ans))
+
